@@ -1,167 +1,168 @@
 <template>
-  <div class="">
-    <!-- <div class="h3Box" >
-      <h3 v-for='newHeader in header' >
-        {{ newHeader }}
-      </h3>
-    </div>
-
-     <div class="innderBox" @click='handleClickRow($event)'>
-        <ul v-for='newRow in row' >
-          <li>{{ newRow }}</li>
-        </ul>
+  <div class="fluid-container">
+    <div class="form-group form-group-lg panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Sortable control</h3>
       </div>
 
-    <div v-if='this.isRowClick === true' class="innderBoxs">
-        <select>
-          <option value="value1">value1</option>
-          <option value="value2">value2</option>
-          <option value="value3">value3</option>
-          <option value="value4">value4</option>
-        </select>
+      <div class="panel-body">
+        <button type="button" class="btn btn-default" @click='orderList'>Sort by original order</button>
+      </div>
     </div>
-    <div v-else=''>
-      <p>false</p>
-    </div> -->
 
-
-
-<div class="grid-container" @click='handleClickRow($event)'>
-  <div class="grid-item">1</div>
-  <div class="grid-item">2</div>
-  <div class="grid-item">3</div>  
-  <div class="grid-item">4</div>
-  <div class="grid-item">5</div>
-  <div class="grid-item">6</div>  
-  <div class="grid-item">7</div>
-  <div class="grid-item">8</div>
-  <div class="grid-item">9</div>  
-</div>
-
-    <!-- <table @click='handleClickRow($event)'>
-      <tr >
-        <th>First Name</th>
-        <th>Last Name</th>
-        <th>Points</th>
-      </tr>
-      <tr>
-        <td>Peter</td>
-        <td>Griffin</td>
-        <td>$100</td>
-      </tr>
-      <tr>
-        <td>Lois</td>
-        <td>Griffin</td>
-        <td>$150</td>
-      </tr>
-      <tr>
-        <td>Joe</td>
-        <td>Swanson</td>
-        <td>$300</td>
-      </tr>
-      <tr>
-        <td>Cleveland</td>
-        <td>Brown</td>
-        <td>$250</td>
-      </tr>
-    </table>
-
-
-        <div v-if='this.isRowClick === true' class="innderBoxs">
-        <select>
-          <option value="value1">value1</option>
-          <option value="value2">value2</option>
-          <option value="value3">value3</option>
-          <option value="value4">value4</option>
-        </select>
+    <div class="col-md-3">
+      <h3>Board Member</h3>
+      <draggable class="list-group" tag="ul" v-model='list' v-bind='dragOptions' :move='onMove' @start='isDragging=true' @end='isDragging = false'>
+        <transition-group type="transition" :name="'flip-list'">
+          <li class="list-group-item" v-for="element in list" :key="element.order">
+              {{ element.name }}
+            <span class="badge">{{ element.order }}</span>
+          </li>
+        </transition-group>
+      </draggable>
     </div>
-    <div v-else=''>
-      <p>false</p>
-    </div> -->
+
+    <div class="col-md-3">
+      <h3>Table 2</h3>
+      <draggable element="span" v-model='list2' v-bind='dragOptions' :move='onMove'>
+        <transition-group name="no" class="list-group" tag="ul">
+          <li class="list-group-item" v-for='element in list2' :key='element.order'>
+              {{ element.name }}
+            <span class="badge">{{ element.order }}</span>
+          </li>
+        </transition-group>
+      </draggable>
+    </div>
+
+    <div class="list-group col-md-3">
+      <pre>{{ listString }}</pre>
+    </div>
+    <div class="list-group col-md-3">
+      <pre>{{ list2String }}</pre>
+    </div>
+
   </div>
 </template>
 
 <script>
+import draggable from "vuedraggable";
+
+const boardMember1 = [
+  {
+    id: 1,
+    name: "Vu",
+  },
+  {
+    id: 2,
+    name: "David"
+  },
+  {
+    id: 3,
+    name: "Sus"
+  },
+  {
+    id: 4,
+    name: "Paul"
+  },
+  {
+    id: 5,
+    name: "Fred"
+  },
+]
+
 export default {
-  name: 'ShowRow',
+  name: "hello",
+  components: {
+    draggable
+  },
   data() {
     return {
-      header: ['col 1', 'col 2', 'col 3', 'col 4', 'col 5'],
-      row: ['row 1', 'row 2', 'row 3', 'row 4', 'row 5'],
-      isRowClick: false
-    }
+      list: boardMember1.map((value, index) => {
+        console.log('name: ', value.name, index);
+        return { name: value.name, order: index + 1, fixed: false };
+      }),
+      list2: [],
+      isDragging: false,
+      delayedDragging: false
+    };
   },
   methods: {
-    handleClickRow(event) {
-      console.log('event', event.srcElement.className);
-
-      if(event.srcElement.className === 'grid-item') {
-        console.log('grid-item', true);
+    orderList() {
+      this.list = this.list.sort((one, two) => {
+        return one.order - two.order;
+      });
+    },
+    onMove({ relatedContext, draggedContext }) {
+      const relatedElement = relatedContext.element;
+      const draggedElement = draggedContext.element;
+      return (
+        (!relatedElement || !relatedElement.fixed) && !draggedElement.fixed
+      );
+    }
+  },
+  computed: {
+    dragOptions() {
+      return {
+        animation: 0,
+        group: "description",
+        ghostClass: "ghost"
+      };
+    },
+    listString() {
+      return JSON.stringify(this.list, null, 12);
+    },
+    list2String() {
+      return JSON.stringify(this.list2, null, 12);
+    }
+  },
+  watch: {
+    isDragging(newValue) {
+      if (newValue) {
+        this.delayedDragging = true;
+        return;
       }
-
-      
-      console.log(this.isRowClick);
-      if(!this.isRowClick) {
-        console.log(true, this.isRowClick);
-        this.isRowClick = true
-      } else {
-        this.isRowClick = !this.isRowClick
-      }
+      this.$nextTick(() => {
+        this.delayedDragging = false;
+      });
     }
   }
-}
+};
 </script>
 
 <style>
-
-.grid-container {
-  display: grid;
-  grid-row-gap: 50px;
-  grid-template-columns: auto auto auto;
-  background-color: #2196F3;
-  padding: 10px;
+.flip-list-move {
+  transition: transform 0.5s;
 }
 
-.grid-item {
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.8);
-  padding: 20px;
-  font-size: 30px;
-  text-align: center;
-  border: 5px solid red;
+.no-move {
+  transition: transform 0s;
+}
+
+.ghost {
+  opacity: 0.5;
+  background: #c8ebfb;
+}
+
+.list-group {
+  min-height: 5rem;
+  border: 3px solid red;
+  display: flex;
+  /* flex-direction: row; */
+  justify-content: center;
+}
+
+.list-group-item {
+  cursor: move;
+  border: 3px solid blue;
+
+  /* grid-auto-rows: auto auto */
+  /* flex-direction: row; */
+  /* flex-basis: 10px */
 
 }
 
-.h3Box {
-  display: grid;
-  grid-column-gap: 50px;
-  grid-template-columns: auto auto auto auto auto;
-  background-color: #2196F3;
-  padding: 10px;
-  border: 5px solid yellow;
-}
-
-.innderBox {
-  display: grid;
-  grid-column-gap: 50px;
-  grid-template-columns: auto auto auto auto auto;
-  /* grid-auto-rows: auto auto auto auto auto; */
-  background-color: #2196F3;
-  /* padding: 10px; */
-  border: 5px solid red;
-}
-
-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-th, td {
-  text-align: left;
-  padding: 8px;
-}
-
-tr:nth-child(even) {
-  background-color: #f2f2f2;
+.list-group-item > i {
+  cursor: pointer;
+  color: gray;
 }
 </style>
